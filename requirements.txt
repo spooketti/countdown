@@ -3,3 +3,4 @@ opencv-python
 discord.py
 pytz
 requests
+Flask
