@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Button
 from discord.ext import commands #idk how important this one is
 import datetime, asyncio
 import pytz
