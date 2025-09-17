@@ -71,7 +71,7 @@ async def daily_message_task():
     while not client.is_closed():
         now = datetime.datetime.now(tz)
         #15:35 = 3:35
-        target = now.replace(hour=22, minute=15, second=0, microsecond=0)
+        target = now.replace(hour=22, minute=20, second=0, microsecond=0)
         if target <= now:
             target += datetime.timedelta(days=1)
         wait_time = (target - now).total_seconds()
