@@ -16,6 +16,7 @@ import draw
 import requests
 import dotenv
 import os
+from threading import Thread
 
 dotenv.load_dotenv()
 
@@ -71,7 +72,7 @@ async def daily_message_task():
     while not client.is_closed():
         now = datetime.datetime.now(tz)
         #15:35 = 3:35
-        target = now.replace(hour=22, minute=20, second=0, microsecond=0)
+        target = now.replace(hour=15, minute=35, second=0, microsecond=0)
         if target <= now:
             target += datetime.timedelta(days=1)
         wait_time = (target - now).total_seconds()
@@ -240,6 +241,10 @@ def generateMessage():
     draw.markCalendar(datetime.datetime.now().month,week,day)
     return Title + Announce + annMsg + Today + todMsg+ Upcoming + upMsg + Trivia +tMsg
 
-client.run(token)
+def run_flask():
+    app.run(host="0.0.0.0", port=5000)
 
-app.run(host='0.0.0.0', port=8000)
+flask_thread = Thread(target=run_flask)
+flask_thread.start()
+
+client.run(token)
