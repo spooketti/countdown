@@ -3,7 +3,7 @@ app = Flask(__name__)
 @app.route("/")
 def hello():
     return "Hello, World!"
-app.run(host='0.0.0.0', port=8000)
+
 
 
 import discord
@@ -71,7 +71,7 @@ async def daily_message_task():
     while not client.is_closed():
         now = datetime.datetime.now(tz)
         #15:35 = 3:35
-        target = now.replace(hour=22, minute=7, second=0, microsecond=0)
+        target = now.replace(hour=22, minute=11, second=0, microsecond=0)
         if target <= now:
             target += datetime.timedelta(days=1)
         wait_time = (target - now).total_seconds()
@@ -241,3 +241,5 @@ def generateMessage():
     return Title + Announce + annMsg + Today + todMsg+ Upcoming + upMsg + Trivia +tMsg
 
 client.run(token)
+
+app.run(host='0.0.0.0', port=8000)
