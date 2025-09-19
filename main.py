@@ -100,12 +100,12 @@ async def add(interaction: discord.Interaction, section:str, arg:str):
     await interaction.response.send_message(f"Added",ephemeral=True)
 
 @client.tree.command(name="adminresetid",guild=brogreID)
-async def adminresetid(interaction: discord.Interaction, boardid:int):
+async def adminresetid(interaction: discord.Interaction, boardid:str):
         global lastKnownMessageID
-        if(interaction.user.id != 636737365125365810):
+        if(interaction.user.id != 636737365125365810 or not boardid.isdigit()):
             await interaction.response.send_message("nah",ephemeral=True)
             return
-        lastKnownMessageID = boardid
+        lastKnownMessageID = int(boardid)
 
 @client.tree.command(name="adminprint",guild=brogreID)
 async def adminprint(interaction: discord.Interaction):
