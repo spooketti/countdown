@@ -61,7 +61,10 @@ async def daily_message_task():
         now = datetime.datetime.now(tz)
         #15:35 = 3:35
         target = now.replace(hour=15, minute=35, second=0, microsecond=0)
+        
         if target <= now:
+            target += datetime.timedelta(days=1)
+        while target.weekday() >= 5: #5sat 6sun
             target += datetime.timedelta(days=1)
         wait_time = (target - now).total_seconds()
         await asyncio.sleep(wait_time)
