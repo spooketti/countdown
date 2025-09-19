@@ -28,7 +28,7 @@ trivArr = []
 client = commands.Bot(command_prefix="cd", intents=intents)
 # primary = "1276421499388956716"
 # testing channel 1362542120291799070
-CHANNEL = 1276421499388956716
+CHANNEL = 1362542120291799070
 channel = client.get_channel(CHANNEL)
 # tz = zoneinfo.ZoneInfo("America/Los_Angeles")
 tz = pytz.timezone("America/Los_Angeles")
@@ -106,6 +106,7 @@ async def adminresetid(interaction: discord.Interaction, boardid:str):
             await interaction.response.send_message("nah",ephemeral=True)
             return
         lastKnownMessageID = int(boardid)
+        await interaction.response.send_message("set id",ephemeral=True)
 
 @client.tree.command(name="adminprint",guild=brogreID)
 async def adminprint(interaction: discord.Interaction):
@@ -117,7 +118,7 @@ async def adminprint(interaction: discord.Interaction):
         picture = None
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
-        lastKnownMessageID = (await interaction.response.send_message(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).id
+        lastKnownMessageID = (await interaction.response.send_message(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).message_id
 
 @client.tree.command(name="roletoggle",guild=brogreID)
 async def roletoggle(interaction: discord.Interaction):
@@ -222,7 +223,7 @@ async def reset(interaction:discord.Interaction):
 async def editMsg():
     global lastKnownMessageID
     msg = await channel.fetch_message(lastKnownMessageID)
-    await msg.edit(content=generateMessage())
+    await msg.edit(content=generateMessage(),allowed_mentions=discord.AllowedMentions(roles=True))
 
 def weekOfMonth(date):
     first_day_of_month = date.replace(day=1)
@@ -256,7 +257,7 @@ def generateMessage():
     week = weekOfMonth(now.date())
     day = now.weekday()+1
 
-    Title = f"<@&1418383855806713921>\n # The Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
+    Title = f"<@&1418383855806713921>\n# The Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
     Announce = "\n## Announcements"
     annMsg = genBullet(annArr)
     Today = "\n## Today's Events"
