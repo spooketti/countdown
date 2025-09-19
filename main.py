@@ -4,12 +4,9 @@ app = Flask(__name__)
 def hello():
     return "Hello, World!"
 
-
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ext import commands #idk how important this one is
 import datetime, asyncio
 import pytz
 import draw
@@ -36,18 +33,8 @@ channel = client.get_channel(CHANNEL)
 # tz = zoneinfo.ZoneInfo("America/Los_Angeles")
 tz = pytz.timezone("America/Los_Angeles")
 
-monthDict = {
-    9:2,
-    10:3,
-    11:4,
-    12:5,
-    1:6,
-    2:7,
-    3:8,
-    4:9,
-    5:10,
-    6:11
-}
+def monthMap(m):
+    return ((m + 3) % 12) + 2
 
 schoolEpoch = datetime.date(2025,8,12)
 brogreID = discord.Object(id=915051802276294676)
@@ -65,6 +52,7 @@ async def on_ready():
     await client.tree.sync(guild=brogreID)
     client.loop.create_task(daily_message_task())
     channel = client.get_channel(CHANNEL)
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, url="https://www.twitch.tv/advikg_", name="/help"))
 
 async def daily_message_task():
     global lastKnownMessageID
@@ -81,7 +69,6 @@ async def daily_message_task():
         picture = None
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
-        f.close()
         lastKnownMessageID = (await channel.send(generateMessage(),file=picture)).id
 
 @client.tree.command(name="add",guild=brogreID)
@@ -111,6 +98,33 @@ async def add(interaction: discord.Interaction, section:str, arg:str):
             return
     await editMsg()
     await interaction.response.send_message(f"Added",ephemeral=True)
+
+@client.tree.command(name="adminprint",guild=brogreID)
+async def adminprint(interaction: discord.Interaction):
+        global lastKnownMessageID
+        if(interaction.user.id != 636737365125365810):
+            await interaction.response.send_message("nah",ephemeral=True)
+            return
+        clearArr()
+        picture = None
+        with open('calendar.png', 'rb') as f:
+            picture = discord.File(f)
+        lastKnownMessageID = (await interaction.response.send_message(generateMessage(),file=picture)).id
+
+@client.tree.command(name="roletoggle",guild=brogreID)
+async def roletoggle(interaction: discord.Interaction):
+    user = interaction.user
+    cdRole = interaction.guild.get_role(1418383855806713921)
+    if(user.get_role(1418383855806713921)):
+        await user.remove_roles(cdRole)
+        await interaction.response.send_message("Removed Role",ephemeral=True)
+        return
+    await user.add_roles(cdRole)
+    await interaction.response.send_message("Gave Role",ephemeral=True)
+
+@client.tree.command(name="help",guild=brogreID)
+async def help(interaction: discord.Interaction):
+        await interaction.response.send_message("/add to add text \n /edit to edit a text (0 based index so if there are 3 messages on 3 lines a b c /edit 1 accesses b) \n /delete same story as edit \n /setimage to draw on the calendar \n /roletoggle get or remove the senior countdown role",ephemeral=True)
 
 @client.tree.command(name="delete",guild=brogreID)
 @app_commands.describe(section="Section")
@@ -187,7 +201,10 @@ async def showimage(interaction: discord.Interaction):
     with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
             await interaction.response.send_message(file=picture)
-    f.close()
+
+@client.tree.command(name="whattimeisit",guild=brogreID)
+async def whattimeisit(interaction: discord.Interaction):
+    await interaction.response.send_message(datetime.datetime.now(tz))
 
 @client.tree.command(name="resetcalendar",guild=brogreID)
 async def reset(interaction:discord.Interaction):
@@ -226,10 +243,12 @@ def generateMessage():
     global upcon 
     global trivArr  
     main = ""
-    month = monthDict[datetime.datetime.now().month]
-    week = weekOfMonth(datetime.datetime.today())
-    day = datetime.datetime.today().weekday()+1
-    Title = f"# The Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(datetime.date.today()-schoolEpoch).days}/296 ({((datetime.date.today()-schoolEpoch).days)/2.96}%)**"
+    now = datetime.datetime.now(tz)
+    month = monthMap(now.month)
+    week = weekOfMonth(now.date())
+    day = now.weekday()+1
+
+    Title = f"# <@&1418383855806713921>\nThe Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
     Announce = "\n## Announcements"
     annMsg = genBullet(annArr)
     Today = "\n## Today's Events"
@@ -238,8 +257,9 @@ def generateMessage():
     upMsg = genBullet(upcon)
     Trivia = "\n## Trivia"
     tMsg = genBullet(trivArr)
-    draw.markCalendar(datetime.datetime.now().month,week,day)
-    return Title + Announce + annMsg + Today + todMsg+ Upcoming + upMsg + Trivia +tMsg
+    helpremark = "\n use /help to edit the board"
+    draw.markCalendar(now.month,week,day)
+    return Title + Announce + annMsg + Today + todMsg+ Upcoming + upMsg + Trivia +tMsg + helpremark
 
 def run_flask():
     app.run(host="0.0.0.0", port=8000)
