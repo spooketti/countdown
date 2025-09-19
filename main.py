@@ -99,6 +99,14 @@ async def add(interaction: discord.Interaction, section:str, arg:str):
     await editMsg()
     await interaction.response.send_message(f"Added",ephemeral=True)
 
+@client.tree.command(name="adminresetid",guild=brogreID)
+async def adminresetid(interaction: discord.Interaction, boardid:int):
+        global lastKnownMessageID
+        if(interaction.user.id != 636737365125365810):
+            await interaction.response.send_message("nah",ephemeral=True)
+            return
+        lastKnownMessageID = boardid
+
 @client.tree.command(name="adminprint",guild=brogreID)
 async def adminprint(interaction: discord.Interaction):
         global lastKnownMessageID
@@ -248,7 +256,7 @@ def generateMessage():
     week = weekOfMonth(now.date())
     day = now.weekday()+1
 
-    Title = f"# <@&1418383855806713921>\nThe Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
+    Title = f"<@&1418383855806713921>\n # The Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
     Announce = "\n## Announcements"
     annMsg = genBullet(annArr)
     Today = "\n## Today's Events"
