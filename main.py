@@ -69,7 +69,7 @@ async def daily_message_task():
         picture = None
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
-        lastKnownMessageID = (await channel.send(generateMessage(),file=picture)).id
+        lastKnownMessageID = (await channel.send(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).id
 
 @client.tree.command(name="add",guild=brogreID)
 @app_commands.describe(section="Section")
@@ -109,7 +109,7 @@ async def adminprint(interaction: discord.Interaction):
         picture = None
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
-        lastKnownMessageID = (await interaction.response.send_message(generateMessage(),file=picture)).id
+        lastKnownMessageID = (await interaction.response.send_message(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).id
 
 @client.tree.command(name="roletoggle",guild=brogreID)
 async def roletoggle(interaction: discord.Interaction):
