@@ -28,7 +28,7 @@ trivArr = []
 client = commands.Bot(command_prefix="cd", intents=intents)
 # primary = "1276421499388956716"
 # testing channel 1362542120291799070
-CHANNEL = 1362542120291799070
+CHANNEL = 1276421499388956716
 channel = client.get_channel(CHANNEL)
 # tz = zoneinfo.ZoneInfo("America/Los_Angeles")
 tz = pytz.timezone("America/Los_Angeles")
