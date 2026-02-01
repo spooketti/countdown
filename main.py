@@ -31,7 +31,7 @@ client = commands.Bot(command_prefix="cd", intents=intents)
 # primary = "1276421499388956716"
 # testing channel 1362542120291799070
 CHANNEL = 1276421499388956716
-channel = client.get_channel(CHANNEL)
+channel = None
 # tz = zoneinfo.ZoneInfo("America/Los_Angeles")
 tz = pytz.timezone("America/Los_Angeles")
 
@@ -52,8 +52,8 @@ def downloadPicture(url):
 async def on_ready():
     global channel
     await client.tree.sync(guild=brogreID)
-    client.loop.create_task(daily_message_task())
     channel = client.get_channel(CHANNEL)
+    client.loop.create_task(daily_message_task())
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, url="https://www.twitch.tv/advikg_", name="/help"))
 
 size = 9
@@ -323,8 +323,6 @@ async def daily_message_task():
         flags = 20
         isBoardNew = False
         canPlay = True
-
-        channel = client.get_channel(CHANNEL)
         minesweep = np.zeros((size, size), dtype=int)
         activeBoard = minesweep.copy()
         isBoardNew = True
