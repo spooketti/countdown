@@ -4,3 +4,4 @@ discord.py
 pytz
 requests
 Flask
+numpy

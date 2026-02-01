@@ -14,6 +14,8 @@ import requests
 import dotenv
 import os
 from threading import Thread
+import numpy as np
+import random
 
 dotenv.load_dotenv()
 
@@ -54,6 +56,250 @@ async def on_ready():
     channel = client.get_channel(CHANNEL)
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, url="https://www.twitch.tv/advikg_", name="/help"))
 
+size = 9
+mines = 20
+flags = 20
+gamesWon = 1
+totalGames = 1 #technically not accurate but i dont really care
+offsets = [-1, 0, 1]
+channel = None
+minesweep = None       
+activeBoard = None      
+boardID = None
+isBoardNew = True
+canPlay = True
+letter_emoji = {
+    0: "🅾️",
+    1: "🇦\u200B", 2: "🇧\u200B", 3: "🇨\u200B", 4: "🇩\u200B",
+    5: "🇪\u200B", 6: "🇫\u200B", 7: "🇬\u200B", 8: "🇭\u200B",
+    9: "🇮\u200B",
+    -1: "💥"
+}
+number_emoji = {
+    0: "▫️",
+    1: "1️⃣", 2: "2️⃣", 3: "3️⃣", 4: "4️⃣",
+    5: "5️⃣", 6: "6️⃣", 7: "7️⃣", 8: "8️⃣",
+    9: "▫️", 10:"🚩", 11:"❌",
+    -1: "💥"
+}
+
+@client.tree.command(name="setgames", guild=brogreID)
+async def hitCommand(interaction: discord.Interaction, totalgames: int, wongames: int):
+    if(interaction.user.id != 636737365125365810):
+            await interaction.response.send_message("nah",ephemeral=True)
+            return
+    global totalGames, gamesWon
+    totalGames = totalgames
+    gamesWon = wongames
+    await interaction.response.send_message("ok",ephemeral=True)
+
+async def generateBoard(first_x, first_y):
+    global minesweep, activeBoard, isBoardNew, flags, canPlay
+
+    flags = 20
+    isBoardNew = False
+    canPlay = True
+    minesweep[:] = 0
+    safe = set()
+    for dy in offsets:
+        for dx in offsets:
+            ny = first_y + dy
+            nx = first_x + dx
+            if 0 <= ny < size and 0 <= nx < size:
+                safe.add((ny, nx))
+
+    placed = 0
+    while placed < mines:
+        x = random.randrange(size)
+        y = random.randrange(size)
+
+        if (y, x) in safe or minesweep[y][x] == -1:
+            continue
+
+        minesweep[y][x] = -1
+        placed += 1
+
+    for a in offsets:
+        for b in offsets:
+            await hit(first_x+b,first_y+a,False)
+    await displayBoard()
+
+async def displayBoard(isGen=False):
+    global activeBoard, boardID, channel, gamesWon, totalGames
+
+    disp = np.full((size + 1, size + 1), "⬜", dtype=object)
+
+    for i in range(1, size + 1):
+        disp[0, i] = letter_emoji.get(i, str(i))
+        disp[i, 0] = letter_emoji.get(i, str(i))
+
+    disp[0, 0] = letter_emoji[0]
+
+    for y in range(size):
+        for x in range(size):
+            val = activeBoard[y, x]
+            if val != 0:
+                disp[y + 1, x + 1] = number_emoji.get(val, str(val))
+
+    board_text = f"🚩:{flags}          Win Rate: {100*(gamesWon/totalGames):.2f}% ({gamesWon}/{totalGames})\n" + '\n'.join(''.join(row) for row in disp)
+
+    if isGen:
+        boardID = (await channel.send(board_text)).id
+        return
+
+    if(hasWon()):
+        await channel.send("Severe W")
+        gamesWon += 1
+        totalGames += 1
+        canPlay = False
+    
+    msg = await channel.fetch_message(boardID)
+    await msg.edit(content= board_text)
+
+@client.tree.command(name="sendboard", guild=brogreID)
+async def start(interaction: discord.Interaction):
+    if(interaction.user.id != 636737365125365810):
+            await interaction.response.send_message("nah",ephemeral=True)
+            return
+    global minesweep, activeBoard, boardID, channel, isBoardNew,flags, canPlay
+    flags = 20
+    isBoardNew = False
+    canPlay = True
+
+    channel = client.get_channel(CHANNEL)
+    minesweep = np.zeros((size, size), dtype=int)
+    activeBoard = minesweep.copy()
+    isBoardNew = True
+
+    await displayBoard(True)
+    await interaction.response.send_message("created board", ephemeral=True)
+
+async def hit(x,y,shouldDisplay=True,user=None):
+    global isBoardNew, minesweep, activeBoard, canPlay, totalGames
+
+    if(canPlay == False):
+        return
+
+    if not (0 <= x < size and 0 <= y < size):
+        return
+    
+    if(activeBoard[y][x] == 10):
+        return
+
+    if isBoardNew:
+        await generateBoard(x, y)
+
+    if minesweep[y][x] == -1:
+        activeBoard[y][x] = -1
+        await channel.send(f"{user.mention} done blew everyone up")
+        canPlay = False
+        totalGames += 1
+        for i in range(size):
+            for j in range(size):
+                if(activeBoard[i][j] == 10 and minesweep[i][j] != -1):
+                    activeBoard[i][j]=11
+                if(minesweep[i][j] == -1):
+                    activeBoard[i][j] = -1
+                
+        await displayBoard()
+        return
+
+    count = 0
+    for dy in offsets:
+        for dx in offsets:
+            ny = y + dy
+            nx = x + dx
+            if 0 <= ny < size and 0 <= nx < size:
+                if minesweep[ny][nx] == -1:
+                    count += 1
+
+    if activeBoard[y][x] != 0:
+        return
+
+    activeBoard[y][x] = count
+    if(count == 0):
+        activeBoard[y][x] = 9
+
+    if count == 0:
+        for dy in offsets:
+            for dx in offsets:
+                if dx == 0 and dy == 0:
+                    continue
+
+                ny = y + dy
+                nx = x + dx
+
+                if 0 <= ny < size and 0 <= nx < size:
+                    if minesweep[ny][nx] != -1:
+                        await hit(nx, ny, False)
+    if (shouldDisplay):
+        await displayBoard()
+        
+
+@client.tree.command(name="hit", guild=brogreID)
+async def hitCommand(interaction: discord.Interaction, x: str, y: str):
+    x = ord(x.lower()) - 97
+    y = ord(y.lower()) - 97
+    await hit(x,y,user=interaction.user)
+    await interaction.response.defer()
+    await interaction.delete_original_response()
+
+@client.tree.command(name="flag", guild=brogreID)
+async def flagCommand(interaction: discord.Interaction, x: str, y: str):
+    global flags
+    global canPlay
+    if(canPlay == False):
+        return
+    x = ord(x.lower()) - 97
+    y = ord(y.lower()) - 97
+    if(activeBoard[y][x] == 0):
+        activeBoard[y][x]=10
+        flags -= 1
+    elif(activeBoard[y][x] == 10):
+        activeBoard[y][x] = 0
+        flags += 1
+    
+    await displayBoard()
+    await interaction.response.defer()
+    await interaction.delete_original_response()
+
+@client.tree.command(name="chord", guild=brogreID)
+async def chordCommand(interaction: discord.Interaction, x: str, y: str):
+    global flags
+    x = ord(x.lower()) - 97
+    y = ord(y.lower()) - 97
+    if(activeBoard[y][x] == 10):
+        return
+    
+    # technically its more optimal to just save the board state and then revert it if the flag check fails but i am REALLY lazy
+    flagCount = 0
+    for a in offsets:
+        for b in offsets:
+            if(a == 0 and b == 0):
+                continue
+            if not (0 <= x+b < size and 0 <= y+a < size):
+                continue
+            if(activeBoard[y+a][x+b] == 10):
+                flagCount += 1
+
+    if (flagCount != activeBoard[y][x]):
+        await interaction.response.defer()
+        await interaction.delete_original_response()
+        return
+
+    for a in offsets:
+        for b in offsets:
+            await hit(x+b,y+a,False,user=interaction.user)
+    
+    await displayBoard()
+    await interaction.response.defer()
+    await interaction.delete_original_response()
+
+def hasWon():
+    arr2 = np.array(activeBoard.copy())
+    arr2 = np.where((arr2 == 0) | (arr2 == 10), -1, 0)
+    return np.array_equal(np.array(minesweep), arr2)
+
 async def daily_message_task():
     global lastKnownMessageID
     await client.wait_until_ready()
@@ -73,6 +319,17 @@ async def daily_message_task():
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
         lastKnownMessageID = (await channel.send(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).id
+        global minesweep, activeBoard, boardID, channel, isBoardNew,flags, canPlay
+        flags = 20
+        isBoardNew = False
+        canPlay = True
+
+        channel = client.get_channel(CHANNEL)
+        minesweep = np.zeros((size, size), dtype=int)
+        activeBoard = minesweep.copy()
+        isBoardNew = True
+
+        await displayBoard(True)
 
 @client.tree.command(name="add",guild=brogreID)
 @app_commands.describe(section="Section")
@@ -136,7 +393,7 @@ async def roletoggle(interaction: discord.Interaction):
 
 @client.tree.command(name="help",guild=brogreID)
 async def help(interaction: discord.Interaction):
-        await interaction.response.send_message("/add to add text \n /edit to edit a text (0 based index so if there are 3 messages on 3 lines a b c /edit 1 accesses b) \n /delete same story as edit \n /setimage to draw on the calendar \n /roletoggle get or remove the senior countdown role",ephemeral=True)
+        await interaction.response.send_message("/add to add text \n /edit to edit a text (0 based index so if there are 3 messages on 3 lines a b c /edit 1 accesses b) \n /delete same story as edit \n /setimage to draw on the calendar \n /roletoggle get or remove the senior countdown role \n /hit to break on the minesweeper board \n /chord to chord on minesweeper \n /flag to flag on minesweeper",ephemeral=True)
 
 @client.tree.command(name="delete",guild=brogreID)
 @app_commands.describe(section="Section")
