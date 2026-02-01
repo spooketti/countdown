@@ -62,7 +62,6 @@ flags = 20
 gamesWon = 1
 totalGames = 1 #technically not accurate but i dont really care
 offsets = [-1, 0, 1]
-channel = None
 minesweep = None       
 activeBoard = None      
 boardID = None
@@ -125,7 +124,7 @@ async def generateBoard(first_x, first_y):
     await displayBoard()
 
 async def displayBoard(isGen=False):
-    global activeBoard, boardID, channel, gamesWon, totalGames
+    global activeBoard, boardID, channel, gamesWon, totalGames, canPlay
 
     disp = np.full((size + 1, size + 1), "⬜", dtype=object)
 
@@ -301,6 +300,7 @@ def hasWon():
     return np.array_equal(np.array(minesweep), arr2)
 
 async def daily_message_task():
+    global minesweep, activeBoard, boardID, channel, isBoardNew,flags, canPlay
     global lastKnownMessageID
     await client.wait_until_ready()
     while not client.is_closed():
@@ -319,7 +319,6 @@ async def daily_message_task():
         with open('calendar.png', 'rb') as f:
             picture = discord.File(f)
         lastKnownMessageID = (await channel.send(generateMessage(),file=picture,allowed_mentions=discord.AllowedMentions(roles=True))).id
-        global minesweep, activeBoard, boardID, channel, isBoardNew,flags, canPlay
         flags = 20
         isBoardNew = False
         canPlay = True
