@@ -514,7 +514,7 @@ def generateMessage():
     week = weekOfMonth(now.date())
     day = now.weekday()+1
 
-    Title = f"<@&1418383855806713921>\n# The Countdown\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
+    Title = f"<@&1418383855806713921>\n# 🎓The Countdown🎓\n## Part: {month} Act: {week} Scene: {day}\n **Day: {(now.date()-schoolEpoch).days}/296 ({((now.date()-schoolEpoch).days)/2.96:.2f}%)**"
     Announce = "\n## Announcements"
     annMsg = genBullet(annArr)
     Today = "\n## Today's Events"
