@@ -326,7 +326,7 @@ async def daily_message_task():
         activeBoard = minesweep.copy()
         isBoardNew = True
 
-        await displayBoard(True)
+        # await displayBoard(True)
 
 @client.tree.command(name="add",guild=brogreID)
 @app_commands.describe(section="Section")
