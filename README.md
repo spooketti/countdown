@@ -1,6 +1,6 @@
 # The Countdown
 
-Daily post in a Discord channel counting down the days from the start to the end of my senior year of highschool
+Daily post in a Discord channel counting down the days from the start to the end of my senior year of highschool, with anyone open to write in the categories through commands (/add Trivia content)
 
 ![alt text](thumbnail1.png)
 
